@@ -1,5 +1,6 @@
 import os
 import os.path
+import distro
 
 
 def is_desktop(platform):
@@ -107,12 +108,19 @@ def configure(env, env_mono):
             else:
                 env.Append(LINKFLAGS=["-Wl,-whole-archive", libnethost_path, "-Wl,-no-whole-archive"])
 
+def get_linux_distro():
+    dist = distro.like()
+    if(dist=="arch"): # Add any other distro where the app host dir is different than 
+                      # Microsoft.NETCore.App.Host.linux-**, eg. Microsoft.NETCore.App.Host.arch-**
+        return dist
+    else:
+        return "linux"
 
 def determine_runtime_identifier(env):
     names_map = {
         "windows": "win",
         "osx": "osx",
-        "linuxbsd": "linux",
+        "linuxbsd": get_linux_distro(),
         "server": "linux",  # FIXME: Is server linux only, or also macos?
     }
 
@@ -126,7 +134,6 @@ def determine_runtime_identifier(env):
         return "%s-%s" % (names_map[platform], bit_arch_map[bits])
     else:
         raise NotImplementedError()
-
 
 def find_app_host_version(dotnet_cmd, search_version_str):
     import subprocess
